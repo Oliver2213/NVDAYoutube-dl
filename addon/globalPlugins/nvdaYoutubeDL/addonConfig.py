@@ -10,7 +10,7 @@ conf=None
 
 _confSpec="""
 [downloader]
-path=string(default=defaultUserFolder)
+path=string(default=currentUserFolder)
 [converter]
 format=string(default=mp3)
 quality=string(default=192)

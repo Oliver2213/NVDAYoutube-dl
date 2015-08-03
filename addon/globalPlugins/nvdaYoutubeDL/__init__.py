@@ -33,7 +33,6 @@ sys.path.append(os.path.join(PLUGIN_DIR, "lib"))
 import xml 
 xml.__path__.append(os.path.join(PLUGIN_DIR, "lib", "xml"))
 import youtube_dl
-import winpaths
 del sys.path[-1]
 
 class speakingLogger(object):
@@ -59,8 +58,8 @@ class GlobalPlugin(globalPluginHandler.GlobalPlugin):
 
 	def __init__(self):
 		super(globalPluginHandler.GlobalPlugin, self).__init__()
-		if addonConfig.conf['downloader']['path']=='defaultUserFolder':
-			addonConfig.conf['downloader']['path']=winpaths.get_personal()
+		if addonConfig.conf['downloader']['path']=="currentUserFolder":
+			addonConfig.conf['downloader']['path']=os.path.expanduser("~")
 			addonConfig.save()
 		self.menu=gui.mainFrame.sysTrayIcon.menu
 		self.youtubeDownloaderSubmenu=wx.Menu()
