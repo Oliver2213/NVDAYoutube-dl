@@ -1,9 +1,9 @@
 #NVDA Youtube-DL Add-on
 
 * Authors: Hrvoje Katić <info@hrvojekatic.com>.
-* Current version: 1.0dev
+* Download [development version][1]
 
-This addon integrates your NVDA screen reader with [Youtube-DL][1]. Youtube-DL is a small program to download videos from YouTube.com and a few more sites. To use this addon, you just select a URL address of the video by using standard Windows text selection commands, and then press NVDA+F8. The selected URL will be detected, and your video will be downloaded and converted automatically.
+This addon integrates your NVDA screen reader with [Youtube-DL][2]. Youtube-DL is a small program to download videos from YouTube.com and a few more sites. To use this addon, you just select a URL address of the video by using standard Windows text selection commands, and then press NVDA+F8. The selected URL will be detected, and your video will be downloaded and converted automatically.
 Go to NVDA menu, Youtube Downloader submenu to configure download formats and other options.
 
 ##Before you begin
@@ -17,7 +17,7 @@ Although this addon and Youtube-DL are free, please keep in mind that downloadin
 ###External converters
 
 Youtube-DL requires some external converters for getting your videos converted to MP3 and some other formats. This addon is configured to use FFMPEG converter by default, which needs to be obtained separately due to license restrictions. Even if you don't get FFMPEG, you may still download a video but the resulting file will be in M4A format.
-Since FFMPEG is tricky to build manually on Windows, you can find pre-compiled binaries for 32-bit and 64-bit Windows at the following link: [http://ffmpeg.zeranoe.com/builds/][2]. If you have a 32-bit Windows, please download 32-bit static binaries. For 64-bit Windows, download 64-bit static binaries. The required binaries are located in 'bin' subfolder found inside the downloaded .7z archive. Copy all .exe files within this folder into your \Windows\System32 folder, or \Windows\SysWOW64 folder in case of 64-bit Windows. If you're still having problems with FFMPEG.exe detection on 64-bit Windows, try downloading both 32-bit and 64-bit static binaries and copy them to your System32 and SysWOW64 folders. Then restart NVDA if needed.
+Since FFMPEG is tricky to build manually on Windows, you can find pre-compiled binaries for 32-bit and 64-bit Windows at the following link: [http://ffmpeg.zeranoe.com/builds/][3]. If you have a 32-bit Windows, please download 32-bit static binaries. For 64-bit Windows, download 64-bit static binaries. The required binaries are located in 'bin' subfolder found inside the downloaded .7z archive. Copy all .exe files within this folder into your \Windows\System32 folder, or \Windows\SysWOW64 folder in case of 64-bit Windows. If you're still having problems with FFMPEG.exe detection on 64-bit Windows, try downloading both 32-bit and 64-bit static binaries and copy them to your System32 and SysWOW64 folders. Then restart NVDA if needed.
 
 ##Basic usage instructions
 
@@ -49,5 +49,10 @@ Note: although Youtube-DL can download both video and audio formats, the current
 
 This menu option will open a folder with downloaded videos, where you can open them, move them to another folder or delete them if you wish.
 
-[1]: https://rg3.github.io/youtube-dl/
-[2]: http://ffmpeg.zeranoe.com/builds/
+###Choose download folder
+
+This menu option lets you choose a folder where your downloaded and converted videos will be saved if you are unsatisfied with default download location.
+
+[1]: https://bitbucket.org/HKatic/nvda-addon-youtubedl/downloads/nvdaYoutubeDL-1.0dev.nvda-addon
+[2]: https://rg3.github.io/youtube-dl/
+[3]: http://ffmpeg.zeranoe.com/builds/
