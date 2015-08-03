@@ -61,24 +61,22 @@ class GlobalPlugin(globalPluginHandler.GlobalPlugin):
 	def __init__(self):
 		super(globalPluginHandler.GlobalPlugin, self).__init__()
 		self.menu=gui.mainFrame.sysTrayIcon.menu
-		self.ydlSubmenu=wx.Menu()
-		self.ydlItem = self.menu.AppendSubMenu(self.ydlSubmenu,
-		# Translators: the name of addon submenu.
-		_("&Youtube downloader"),
-		# Translators: the tooltip text for addon submenu.
-		_("Youtube downloader options"))
-		self.settingsItem = self.ydlSubmenu.Append(wx.ID_ANY,
+		self.youtubeDownloaderSubmenu=wx.Menu()
+		self.audioConverterOptionsMenuItem=self.youtubeDownloaderSubmenu.Append(wx.ID_ANY,
 		# Translators: the name for an item of addon submenu.
 		_("Audio &converter options..."),
 		# Translators: the tooltip text for an item of addon submenu.
 		_("Displays a dialog box for audio converter setup"))
-		gui.mainFrame.sysTrayIcon.Bind(wx.EVT_MENU, self.onAudioConverterOptionsClicked, self.settingsItem)
-		self.downloadsFolderItem = self.ydlSubmenu.Append(wx.ID_ANY,
+		gui.mainFrame.sysTrayIcon.Bind(wx.EVT_MENU, self.onAudioConverterOptionsClicked, self.audioConverterOptionsMenuItem)
+		self.downloadsFolderMenuItem=self.youtubeDownloaderSubmenu.Append(wx.ID_ANY,
 		# Translators: the name for an item of addon submenu.
 		_("View &downloaded videos"),
 		# Translators: the tooltip text for an item of addon submenu.
 		_("Opens a folder with downloaded videos"))
-		gui.mainFrame.sysTrayIcon.Bind(wx.EVT_MENU, self.onDownloadsFolderClicked, self.downloadsFolderItem)
+		gui.mainFrame.sysTrayIcon.Bind(wx.EVT_MENU, self.onDownloadsFolderClicked, self.downloadsFolderMenuItem)
+		self.youtubeDownloaderMenuItem=self.menu.InsertMenu(2, wx.ID_ANY,
+		# Translators: the name of addon submenu.
+		_("&Youtube downloader"), self.youtubeDownloaderSubmenu)
 
 	def onAudioConverterOptionsClicked(self, evt):
 		gui.mainFrame._popupSettingsDialog(interface.audioConverterOptionsDialog)
@@ -91,7 +89,7 @@ class GlobalPlugin(globalPluginHandler.GlobalPlugin):
 
 	def terminate(self):
 		try:
-			self.menu.RemoveItem(self.ydlItem)
+			self.menu.RemoveItem(self.youtubeDownloaderMenuItem)
 		except wx.PyDeadObjectError:
 			pass
 
