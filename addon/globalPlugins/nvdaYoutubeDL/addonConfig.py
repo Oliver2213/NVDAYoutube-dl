@@ -9,6 +9,8 @@ confFile="nvdaYoutubeDL.ini"
 conf=None
 
 _confSpec="""
+[downloader]
+path=string(default=defaultUserFolder)
 [converter]
 format=string(default=mp3)
 quality=string(default=192)

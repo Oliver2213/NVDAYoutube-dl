@@ -28,14 +28,13 @@ import addonHandler
 addonConfig.load()
 addonHandler.initTranslation()
 
-PLUGIN_DIR = os.path.dirname(__file__)
-DOWNLOAD_DIR = os.path.join(os.path.dirname(__file__), 'Downloads')
+PLUGIN_DIR=os.path.dirname(__file__)
 sys.path.append(os.path.join(PLUGIN_DIR, "lib"))
 import xml 
 xml.__path__.append(os.path.join(PLUGIN_DIR, "lib", "xml"))
 import youtube_dl
+import winpaths
 del sys.path[-1]
-if not os.path.exists(DOWNLOAD_DIR): os.mkdir(DOWNLOAD_DIR)
 
 class speakingLogger(object):
 
@@ -60,6 +59,9 @@ class GlobalPlugin(globalPluginHandler.GlobalPlugin):
 
 	def __init__(self):
 		super(globalPluginHandler.GlobalPlugin, self).__init__()
+		if addonConfig.conf['downloader']['path']=='defaultUserFolder':
+			addonConfig.conf['downloader']['path']=winpaths.get_personal()
+			addonConfig.save()
 		self.menu=gui.mainFrame.sysTrayIcon.menu
 		self.youtubeDownloaderSubmenu=wx.Menu()
 		self.audioConverterOptionsMenuItem=self.youtubeDownloaderSubmenu.Append(wx.ID_ANY,
@@ -74,6 +76,12 @@ class GlobalPlugin(globalPluginHandler.GlobalPlugin):
 		# Translators: the tooltip text for an item of addon submenu.
 		_("Opens a folder with downloaded videos"))
 		gui.mainFrame.sysTrayIcon.Bind(wx.EVT_MENU, self.onDownloadsFolderClicked, self.downloadsFolderMenuItem)
+		self.chooseDownloadFolderMenuItem=self.youtubeDownloaderSubmenu.Append(wx.ID_ANY,
+		# Translators: the name for an item of addon submenu.
+		_("Choose download &folder..."),
+		# Translators: the tooltip text for an item of addon submenu.
+		_("Opens a Windows dialog box to choose a folder in which videos will be downloaded"))
+		gui.mainFrame.sysTrayIcon.Bind(wx.EVT_MENU, self.onChooseDownloadFolderClicked, self.chooseDownloadFolderMenuItem)
 		self.youtubeDownloaderMenuItem=self.menu.InsertMenu(2, wx.ID_ANY,
 		# Translators: the name of addon submenu.
 		_("&Youtube downloader"), self.youtubeDownloaderSubmenu)
@@ -83,9 +91,21 @@ class GlobalPlugin(globalPluginHandler.GlobalPlugin):
 
 	def onDownloadsFolderClicked(self, evt):
 		try:
-			os.startfile(DOWNLOAD_DIR)
+			os.startfile(addonConfig.conf['downloader']['path'])
 		except WindowsError:
 			pass
+
+	def onChooseDownloadFolderClicked(self, evt):
+		dlg=wx.DirDialog(gui.mainFrame,
+		# Translators: label of a dialog for choosing download folder.
+		_("Select a folder for downloading videos"),
+		addonConfig.conf['downloader']['path'], wx.DD_DEFAULT_STYLE)
+		gui.mainFrame.prePopup()
+		result=dlg.ShowModal()
+		gui.mainFrame.postPopup()
+		if result == wx.ID_OK:
+			addonConfig.conf['downloader']['path']=dlg.GetPath()
+			addonConfig.save()
 
 	def terminate(self):
 		try:
@@ -120,7 +140,7 @@ class GlobalPlugin(globalPluginHandler.GlobalPlugin):
 			urlPattern=re.compile(r"(^|[ \t\r\n])((http|https|www\.):?(([A-Za-z0-9$_.+!*(),;/?:@&~=-])|%[A-Fa-f0-9]{2}){2,}(#([a-zA-Z0-9][a-zA-Z0-9$_.+!*(),;/?:@&~=%-]*))?([A-Za-z0-9$_+!*();/?:~-]))")
 			address=urlPattern.search(info.text)
 			if address:
-				os.chdir(DOWNLOAD_DIR)
+				os.chdir(addonConfig.conf['downloader']['path'])
 				ui.message(_("Starting download."))
 				with youtube_dl.YoutubeDL(ydl_opts) as ydl:
 					ydl.download([unicode(address.group().strip())])
