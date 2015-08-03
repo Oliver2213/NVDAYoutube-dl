@@ -23,6 +23,7 @@ import wx
 import re
 import api
 import textInfos
+import globalVars
 from logHandler import log
 import addonHandler
 addonConfig.load()
@@ -58,6 +59,8 @@ class GlobalPlugin(globalPluginHandler.GlobalPlugin):
 
 	def __init__(self):
 		super(globalPluginHandler.GlobalPlugin, self).__init__()
+		if globalVars.appArgs.secure:
+			return
 		if addonConfig.conf['downloader']['path']=="currentUserFolder":
 			addonConfig.conf['downloader']['path']=os.path.expanduser("~")
 			addonConfig.save()
