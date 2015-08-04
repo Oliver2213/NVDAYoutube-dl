@@ -72,18 +72,24 @@ class GlobalPlugin(globalPluginHandler.GlobalPlugin):
 		# Translators: the tooltip text for an item of addon submenu.
 		_("Displays a dialog box for audio converter setup"))
 		gui.mainFrame.sysTrayIcon.Bind(wx.EVT_MENU, self.onAudioConverterOptionsClicked, self.audioConverterOptionsMenuItem)
-		self.downloadsFolderMenuItem=self.youtubeDownloaderSubmenu.Append(wx.ID_ANY,
-		# Translators: the name for an item of addon submenu.
-		_("View &downloaded videos"),
-		# Translators: the tooltip text for an item of addon submenu.
-		_("Opens a folder with downloaded videos"))
-		gui.mainFrame.sysTrayIcon.Bind(wx.EVT_MENU, self.onDownloadsFolderClicked, self.downloadsFolderMenuItem)
 		self.chooseDownloadFolderMenuItem=self.youtubeDownloaderSubmenu.Append(wx.ID_ANY,
 		# Translators: the name for an item of addon submenu.
 		_("Choose download &folder..."),
 		# Translators: the tooltip text for an item of addon submenu.
 		_("Opens a Windows dialog box to choose a folder in which videos will be downloaded"))
 		gui.mainFrame.sysTrayIcon.Bind(wx.EVT_MENU, self.onChooseDownloadFolderClicked, self.chooseDownloadFolderMenuItem)
+		self.downloadsFolderMenuItem=self.youtubeDownloaderSubmenu.Append(wx.ID_ANY,
+		# Translators: the name for an item of addon submenu.
+		_("View &downloaded videos"),
+		# Translators: the tooltip text for an item of addon submenu.
+		_("Opens a folder with downloaded videos"))
+		gui.mainFrame.sysTrayIcon.Bind(wx.EVT_MENU, self.onDownloadsFolderClicked, self.downloadsFolderMenuItem)
+		self.updateYDLMenuItem=self.youtubeDownloaderSubmenu.Append(wx.ID_ANY,
+		# Translators: the name of a menu item to update youtube-dl
+		_("&Update Youtube-DL"),
+		# Translators: the tooltip text for a menu item to update YDL.
+		_("Updates Youtube-DL, which this add-on is based on"))
+		gui.mainFrame.sysTrayIcon.Bind(wx.EVT_MENU, self.onUpdateYDL, self.updateYDLMenuItem)
 		self.youtubeDownloaderMenuItem=self.menu.InsertMenu(2, wx.ID_ANY,
 		# Translators: the name of addon submenu.
 		_("&Youtube downloader"), self.youtubeDownloaderSubmenu)
@@ -108,6 +114,9 @@ class GlobalPlugin(globalPluginHandler.GlobalPlugin):
 		if result == wx.ID_OK:
 			addonConfig.conf['downloader']['path']=dlg.GetPath()
 			addonConfig.save()
+
+	def onUpdateYDL(evt):
+		
 
 	def terminate(self):
 		try:
