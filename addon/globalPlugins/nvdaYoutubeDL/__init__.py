@@ -65,6 +65,8 @@ class GlobalPlugin(globalPluginHandler.GlobalPlugin):
 		if addonConfig.conf['downloader']['path']=="currentUserFolder":
 			addonConfig.conf['downloader']['path']=os.path.expanduser("~")
 			addonConfig.save()
+		self.speakingLogger = speakingLogger()
+
 		self.menu=gui.mainFrame.sysTrayIcon.menu
 		self.youtubeDownloaderSubmenu=wx.Menu()
 		self.audioConverterOptionsMenuItem=self.youtubeDownloaderSubmenu.Append(wx.ID_ANY,
@@ -118,7 +120,7 @@ class GlobalPlugin(globalPluginHandler.GlobalPlugin):
 
 	def script_downloadVideo(self, gesture):
 		currentDirectory=os.getcwdu()
-		ydl_opts={
+		self.ydl_opts={
 			'logger':speakingLogger(),
 			'progress_hooks':[speakingHook],
 			'format':'bestaudio/best',
@@ -143,11 +145,11 @@ class GlobalPlugin(globalPluginHandler.GlobalPlugin):
 			urlPattern=re.compile(r"(^|[ \t\r\n])((http|https|www\.):?(([A-Za-z0-9$_.+!*(),;/?:@&~=-])|%[A-Fa-f0-9]{2}){2,}(#([a-zA-Z0-9][a-zA-Z0-9$_.+!*(),;/?:@&~=%-]*))?([A-Za-z0-9$_+!*();/?:~-]))")
 			address=urlPattern.search(info.text)
 			if address:
-				speakingLogger.debug("URL for YDL item received and parsed")
+				self.speakingLogger.debug("URL for YDL item received and parsed")
 				os.chdir(addonConfig.conf['downloader']['path'])
 				ui.message(_("Starting download."))
-				speakingLogger.debug("Passing download to thread.")				
-				DLThread = threading.Thread(target = do_dl, args = (address, ydl_opts))
+				self.speakingLogger.debug("Passing download to thread.")				
+				DLThread = threading.Thread(target = self.do_dl, args = (address, self.ydl_opts))
 				DLThread.setDaemon(True)
 				DLThread.start()
 #				ui.message(_("Done."))
@@ -157,7 +159,7 @@ class GlobalPlugin(globalPluginHandler.GlobalPlugin):
 				ui.message(_("Invalid URL address."))
 
 	def do_dl(self, address, optstable):
-		with youtube_dl.YoutubeDL(ydl_opts) as ydl:
+		with youtube_dl.YoutubeDL(optstable) as ydl:
 			ydl.download([unicode(address.group().strip())])
 
 	__gestures={
