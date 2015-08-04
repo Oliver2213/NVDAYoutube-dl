@@ -160,7 +160,7 @@ class GlobalPlugin(globalPluginHandler.GlobalPlugin):
 				ui.message(_("Invalid URL address."))
 
 	def do_dl(self, address, optstable):
-		with youtube_dl.YoutubeDL(ydl_opts) as ydl:
+		with youtube_dl.YoutubeDL(optstable) as ydl:
 			ydl.download([unicode(address.group().strip())])
 
 	__gestures={
