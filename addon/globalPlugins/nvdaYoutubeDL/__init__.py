@@ -47,7 +47,6 @@ class speakingLogger(object):
 
 	def error(self, msg):
 		log.error(msg)
-		ui.message("Youtube-DL has encountered an error. For more details, see the NVDA log.")
 
 def speakingHook(d):
 	if d['status'] == 'downloading':
@@ -55,7 +54,7 @@ def speakingHook(d):
 	elif d['status'] == 'finished':
 		ui.message(_("Download complete. Converting video."))
 	elif d['status'] == 'error':
-		ui.message(_("Download error."))
+		ui.message("Youtube-DL has encountered an error. For more details, see the NVDA log.")
 
 class GlobalPlugin(globalPluginHandler.GlobalPlugin):
 
