@@ -1,0 +1,135 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) YEAR THE PACKAGE'S COPYRIGHT HOLDER
+# This file is distributed under the same license as the PACKAGE package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: 'nvdaYoutubeDL' '1.0dev'\n"
+"Report-Msgid-Bugs-To: 'nvda-translations@freelists.org'\n"
+"POT-Creation-Date: 2015-08-03 23:44+0200\n"
+"PO-Revision-Date: 2015-08-04 08:20+0200\n"
+"Language: hr\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=3; plural=(n%10==1 && n%100!=11 ? 0 : n%10>=2 && n"
+"%10<=4 && (n%100<10 || n%100>=20) ? 1 : 2);\n"
+"Last-Translator: Hrvoje Katić <hrvojekatic@gmail.com>\n"
+"Language-Team: hr <info@hrvojekatic.com>\n"
+"X-Generator: Poedit 1.8.4\n"
+"X-Poedit-SourceCharset: UTF-8\n"
+
+#: addon\globalPlugins\nvdaYoutubeDL\__init__.py:54
+msgid "Download complete. Converting video."
+msgstr "Preuzimanje završeno. Pretvaranje video zapisa."
+
+#: addon\globalPlugins\nvdaYoutubeDL\__init__.py:56
+msgid "Download error."
+msgstr "Greška prilikom preuzimanja."
+
+#. Translators: the name for an item of addon submenu.
+#: addon\globalPlugins\nvdaYoutubeDL\__init__.py:71
+msgid "Audio &converter options..."
+msgstr "Opcije audio &pretvornika..."
+
+#. Translators: the tooltip text for an item of addon submenu.
+#: addon\globalPlugins\nvdaYoutubeDL\__init__.py:73
+msgid "Displays a dialog box for audio converter setup"
+msgstr "Prikazuje dijaloški okvir za podešavanje audio pretvornika"
+
+#. Translators: the name for an item of addon submenu.
+#: addon\globalPlugins\nvdaYoutubeDL\__init__.py:77
+msgid "View &downloaded videos"
+msgstr "Pregled preuzetih &video zapisa"
+
+#. Translators: the tooltip text for an item of addon submenu.
+#: addon\globalPlugins\nvdaYoutubeDL\__init__.py:79
+msgid "Opens a folder with downloaded videos"
+msgstr "Otvara mapu s preuzetim video zapisima"
+
+#. Translators: the name for an item of addon submenu.
+#: addon\globalPlugins\nvdaYoutubeDL\__init__.py:83
+msgid "Choose download &folder..."
+msgstr "Odabir &mape za preuzimanje..."
+
+#. Translators: the tooltip text for an item of addon submenu.
+#: addon\globalPlugins\nvdaYoutubeDL\__init__.py:85
+msgid ""
+"Opens a Windows dialog box to choose a folder in which videos will be "
+"downloaded"
+msgstr ""
+"Otvara Windows dijaloški okvir za odabir mape u koju će se preuzeti video "
+"zapisi spremati"
+
+#. Translators: the name of addon submenu.
+#: addon\globalPlugins\nvdaYoutubeDL\__init__.py:89
+msgid "&Youtube downloader"
+msgstr "&Youtube skidač"
+
+#. Translators: label of a dialog for choosing download folder.
+#: addon\globalPlugins\nvdaYoutubeDL\__init__.py:103
+msgid "Select a folder for downloading videos"
+msgstr "Odaberite mapu za spremanje preuzetih video zapisa"
+
+#. Translators: This message is spoken if there's no selection.
+#: addon\globalPlugins\nvdaYoutubeDL\__init__.py:140
+msgid "Nothing selected."
+msgstr "Ništa nije odabrano."
+
+#: addon\globalPlugins\nvdaYoutubeDL\__init__.py:146
+msgid "Starting download."
+msgstr "Početak preuzimanja."
+
+#: addon\globalPlugins\nvdaYoutubeDL\__init__.py:149
+msgid "Done."
+msgstr "Gotovo."
+
+#. Translators: This message is spoken if selection doesn't contain any URL address.
+#: addon\globalPlugins\nvdaYoutubeDL\__init__.py:153
+msgid "Invalid URL address."
+msgstr "Neispravna URL adresa."
+
+#. Translators: name of the dialog.
+#: addon\globalPlugins\nvdaYoutubeDL\interface.py:30
+msgid "Audio Converter Options"
+msgstr "Mogućnosti audio pretvornika"
+
+#. Translators: This is the name of the option in Audio Converter Options dialog.
+#: addon\globalPlugins\nvdaYoutubeDL\interface.py:38
+msgid "Conversion &format:"
+msgstr "&Format u koji će se video zapisi pretvoriti:"
+
+#. Translators: This is the name of the option in Audio Converter Options dialog.
+#: addon\globalPlugins\nvdaYoutubeDL\interface.py:47
+msgid "Conversion &quality:"
+msgstr "&Kvaliteta pretvorenih video zapisa:"
+
+#. Add-on summary, usually the user visible name of the addon.
+#. Translators: Summary for this add-on to be shown on installation and add-on information.
+#: buildVars.py:17
+msgid "NVDA Youtube-DL"
+msgstr "NVDA Youtube-DL"
+
+#. Add-on description
+#. Translators: Long description to be shown for this add-on on add-on information from add-ons manager
+#: buildVars.py:20
+msgid ""
+"This addon integrates your NVDA screen reader with Youtube-DL. Youtube-DL is "
+"a small program to download videos from YouTube.com and a few more sites.\n"
+"To use this addon, you just select a URL address of the video by using "
+"standard Windows text selection commands, and then press NVDA+F8. The "
+"selected URL will be detected, and your video will be downloaded and "
+"converted automatically.\n"
+"Go to NVDA menu, Youtube Downloader submenu to configure download formats "
+"and other options.\n"
+msgstr ""
+"Ovaj dodatak integrira vaš NVDA čitač zaslona sa Youtube-DL programom. "
+"Youtube-DL je mali program za preuzimanje video zapisa sa YouTube.com i još "
+"nekolicine stranica.\n"
+"Za korištenje ovog dodatka, samo odaberite URL adresu video zapisa koristeći "
+"se standardnim Windows naredbama za odabir teksta, a zatim pritisnite NVDA"
+"+F8. Odabrana URL adresa bit će detektirana, a vaš video će biti automatski "
+"preuzet i pretvoren.\n"
+"Pođite u NVDA izbornik, podizbornik Youtube skidač za podešavanje formata "
+"preuzimanja i ostalih mogućnosti.\n"

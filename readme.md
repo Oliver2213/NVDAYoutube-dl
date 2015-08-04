@@ -21,7 +21,7 @@ Since FFMPEG is tricky to build manually on Windows, you can find pre-compiled b
 
 ##Basic usage instructions
 
-###Example 1: Downloading currently playing Youtube video
+###Example 1: Downloading currently playing Youtube video on Youtube Web site
 
 1. Open your Web browser.
 2. Search for any video on Youtube that you would like to download.
@@ -29,7 +29,7 @@ Since FFMPEG is tricky to build manually on Windows, you can find pre-compiled b
 4. Press Control+L to set focus on the address bar. The URL address will be automatically selected when address bar has focus.
 5. Press NVDA+F8 to start download. Youtube-DL will automatically download a video and convert it into the MP3 format in 192 KBPS bitrate by default.
 
-###Example 2: Downloading currently playing Youtube video from a pasted link in the E-Mail message or a document
+###Example 2: Downloading Youtube video from a pasted link in the E-Mail message or a document
 
 1. Open your E-Mail message or a document containing any Youtube links.
 2. Arrow down to a line that contains URL address of a Youtube video.
@@ -38,16 +38,16 @@ Since FFMPEG is tricky to build manually on Windows, you can find pre-compiled b
 
 ##Addon options menu
 
-Go to NVDA menu, Youtube Downloader sub menu to access various options for this addon and Youtube-DL.
+Go to NVDA menu, Youtube Downloader sub menu to access various options concerning this addon and Youtube-DL.
 
 ###Audio converter options
 
-In the Audio Converter Options dialog you can configure in which format your video will be downloaded, and what quality will be applied.
+In the Audio Converter Options dialog you can configure in which format your video will be converted after it's downloaded, and what quality will be applied.
 Note: although Youtube-DL can download both video and audio formats, the current version of this addon supports downloading in audio formats only. The supported audio formats that you can choose are: MP3, Wave, Ogg Vorbis, AAC, M4A, and Opus.
 
 ###View downloaded videos
 
-This menu option will open a folder with downloaded videos, where you can open them, move them to another folder or delete them if you wish.
+This menu option will open a folder with your downloaded and converted videos, where you can open them, move them to another folder or delete them if you wish.
 
 ###Choose download folder
 
