@@ -47,6 +47,7 @@ class speakingLogger(object):
 
 	def error(self, msg):
 		log.error(msg)
+		ui.message("Youtube-DL has encountered an error. For more details, see the NVDA log.")
 
 def speakingHook(d):
 	if d['status'] == 'downloading':
@@ -159,7 +160,7 @@ class GlobalPlugin(globalPluginHandler.GlobalPlugin):
 				ui.message(_("Invalid URL address."))
 
 	def do_dl(self, address, optstable):
-		with youtube_dl.YoutubeDL(optstable) as ydl:
+		with youtube_dl.YoutubeDL(ydl_opts) as ydl:
 			ydl.download([unicode(address.group().strip())])
 
 	__gestures={
