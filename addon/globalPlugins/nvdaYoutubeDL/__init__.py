@@ -158,7 +158,7 @@ class GlobalPlugin(globalPluginHandler.GlobalPlugin):
 
 	def do_dl(self, address, optstable):
 		with youtube_dl.YoutubeDL(ydl_opts) as ydl:
-		ydl.download([unicode(address.group().strip())])
+			ydl.download([unicode(address.group().strip())])
 
 	__gestures={
 		"kb:NVDA+F8":"downloadVideo"
