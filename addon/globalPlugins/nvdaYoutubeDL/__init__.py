@@ -158,7 +158,7 @@ class GlobalPlugin(globalPluginHandler.GlobalPlugin):
 				ui.message(_("Invalid URL address."))
 
 	def do_dl(self, address, optstable):
-		os.chdir(self.addonConfig.conf['downloader']['path'])
+		os.chdir(addonConfig.conf['downloader']['path'])
 		with youtube_dl.YoutubeDL(optstable) as ydl:
 			ydl.download([unicode(address.group().strip())])
 		os.chdir(self.currentDirectory)
