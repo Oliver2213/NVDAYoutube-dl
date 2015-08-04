@@ -5,3 +5,5 @@ erase /S /Q *.dblite
 erase /S /Q *.ini
 erase /S /Q *.mo
 erase /S /Q *.html
+rd /S /Q .\addon\docs\en
+erase /Q .\addon\docs\*.css

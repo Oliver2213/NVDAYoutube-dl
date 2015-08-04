@@ -26,7 +26,7 @@ Budući da je FFMPEG zahtjevan za kompiliranje iz izvornog koda na Windows susta
 1. Otvorite vaš Web preglednik.
 2. Potražite neki video na Youtube stranici koji biste htjeli preuzeti.
 3. Otvorite link željenog video zapisa.
-4. Pritisnite Control+L da biste fokusirali adresnu traku. The URL address will be automatically selected when address bar has focus.
+4. Pritisnite Control+L da biste fokusirali adresnu traku. URL adresa bit će automatski odabrana čim je adresna traka u fokusu.
 5. Pritisnite NVDA+F8 da biste započeli preuzimanje. Youtube-DL će automatski preuzeti video i pretvoriti ga u MP3 format u 192 KBPS kvaliteti prema početnoj vrijednosti.
 
 ###Primjer 2: Preuzimanje Youtube video zapisa putem prilijepljenog linka unutar E-Mail poruke ili dokumenta
