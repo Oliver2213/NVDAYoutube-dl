@@ -119,7 +119,7 @@ class GlobalPlugin(globalPluginHandler.GlobalPlugin):
 			pass
 
 	def script_downloadVideo(self, gesture):
-		currentDirectory=os.getcwdu()
+		self.currentDirectory=os.getcwdu()
 		self.ydl_opts={
 			'logger':speakingLogger(),
 			'progress_hooks':[speakingHook],
@@ -147,21 +147,22 @@ class GlobalPlugin(globalPluginHandler.GlobalPlugin):
 			address=urlPattern.search(info.text)
 			if address:
 				self.speakingLogger.debug("URL for YDL item received and parsed")
-				os.chdir(addonConfig.conf['downloader']['path'])
 				ui.message(_("Starting download."))
 				self.speakingLogger.debug("Passing download to thread.")				
 				DLThread = threading.Thread(target = self.do_dl, args = (address, self.ydl_opts))
 				DLThread.setDaemon(True)
 				DLThread.start()
 #				ui.message(_("Done."))
-				os.chdir(currentDirectory)
 			else:
 				# Translators: This message is spoken if selection doesn't contain any URL address.
 				ui.message(_("Invalid URL address."))
 
 	def do_dl(self, address, optstable):
+		os.chdir(self.addonConfig.conf['downloader']['path'])
 		with youtube_dl.YoutubeDL(optstable) as ydl:
 			ydl.download([unicode(address.group().strip())])
+		os.chdir(self.currentDirectory)
+
 
 	__gestures={
 		"kb:NVDA+F8":"downloadVideo"
