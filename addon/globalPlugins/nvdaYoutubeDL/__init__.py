@@ -125,6 +125,7 @@ class GlobalPlugin(globalPluginHandler.GlobalPlugin):
 			'logger':speakingLogger(),
 			'progress_hooks':[speakingHook],
 			'format':'bestaudio/best',
+			'no_color':'opts.no_color',
 			'postprocessors':[{
 				'key':'FFmpegExtractAudio',
 				'preferredcodec':addonConfig.conf['converter']['format'],
