@@ -60,7 +60,7 @@ def speakingHook(d):
 	elif d['status'] == 'error':
 		ui.message(_("Download error."))
 
-def download():
+def download(selection):
 	currentDirectory=os.getcwdu()
 	ydl_opts={
 		'logger':speakingLogger(),
@@ -72,28 +72,16 @@ def download():
 			'preferredquality':addonConfig.conf['converter']['quality'],
 			}],
 	}
-	obj=api.getFocusObject()
-	treeInterceptor=obj.treeInterceptor
-	if hasattr(treeInterceptor,'TextInfo') and not treeInterceptor.passThrough:
-		obj=treeInterceptor
-	try:
-		info=obj.makeTextInfo(textInfos.POSITION_SELECTION)
-	except (RuntimeError, NotImplementedError):
-		info=None
-	if not info or info.isCollapsed:
-		# Translators: This message is spoken if there's no selection.
-		ui.message(_("Nothing selected."))
-	else:
-		urlPattern=re.compile(r"(^|[ \t\r\n])((http|https|www\.):?(([A-Za-z0-9$_.+!*(),;/?:@&~=-])|%[A-Fa-f0-9]{2}){2,}(#([a-zA-Z0-9][a-zA-Z0-9$_.+!*(),;/?:@&~=%-]*))?([A-Za-z0-9$_+!*();/?:~-]))")
-		address=urlPattern.search(info.text)
-		if address:
-			os.chdir(addonConfig.conf['downloader']['path'])
-			ui.message(_("Starting download."))
-			with youtube_dl.YoutubeDL(ydl_opts) as ydl:
-				ydl.download([unicode(address.group().strip())])
+	urlPattern=re.compile(r"(^|[ \t\r\n])((http|https|www\.):?(([A-Za-z0-9$_.+!*(),;/?:@&~=-])|%[A-Fa-f0-9]{2}){2,}(#([a-zA-Z0-9][a-zA-Z0-9$_.+!*(),;/?:@&~=%-]*))?([A-Za-z0-9$_+!*();/?:~-]))")
+	address=urlPattern.search(selection)
+	if address:
+		os.chdir(addonConfig.conf['downloader']['path'])
+		ui.message(_("Starting download."))
+		with youtube_dl.YoutubeDL(ydl_opts) as ydl:
+			ydl.download([unicode(address.group().strip())])
 			ui.message(_("Done."))
 			os.chdir(currentDirectory)
-		else:
+	else:
 			# Translators: This message is spoken if selection doesn't contain any URL address.
 			ui.message(_("Invalid URL address."))
 
@@ -158,7 +146,19 @@ class GlobalPlugin(globalPluginHandler.GlobalPlugin):
 			pass
 
 	def script_downloadVideo(self, gesture):
-		threading.Thread(target=download).start()
+		obj=api.getFocusObject()
+		treeInterceptor=obj.treeInterceptor
+		if hasattr(treeInterceptor,'TextInfo') and not treeInterceptor.passThrough:
+			obj=treeInterceptor
+		try:
+			info=obj.makeTextInfo(textInfos.POSITION_SELECTION)
+		except (RuntimeError, NotImplementedError):
+			info=None
+		if not info or info.isCollapsed:
+			# Translators: This message is spoken if there's no selection.
+			ui.message(_("Nothing selected."))
+		else:
+			threading.Thread(target=download, args=(info.text,)).start()
 
 	__gestures={
 		"kb:NVDA+F8":"downloadVideo"
