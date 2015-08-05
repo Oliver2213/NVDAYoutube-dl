@@ -49,8 +49,12 @@ class speakingLogger(object):
 		log.error(msg)
 
 def speakingHook(d):
+	percentage=0
+	frequency=100
 	if d['status'] == 'downloading':
-			tones.beep(500, 50)
+		percentage=int((float(d['downloaded_bytes'])/d['total_bytes'])*100)
+		frequency=100+percentage
+		tones.beep(frequency, 50)
 	elif d['status'] == 'finished':
 		ui.message(_("Download complete. Converting video."))
 	elif d['status'] == 'error':
