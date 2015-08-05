@@ -20,6 +20,7 @@ import gui
 import os
 import sys
 import wx
+import threading
 import re
 import api
 import textInfos
@@ -35,6 +36,7 @@ import xml
 xml.__path__.append(os.path.join(PLUGIN_DIR, "lib", "xml"))
 import youtube_dl
 del sys.path[-1]
+_IS_DOWNLOADING=False # checks if download is in progress
 
 class speakingLogger(object):
 
@@ -48,12 +50,49 @@ class speakingLogger(object):
 		log.error(msg)
 
 def speakingHook(d):
+	percentage=0
+	frequency=100
 	if d['status'] == 'downloading':
-			tones.beep(500, 50)
+		percentage=int((float(d['downloaded_bytes'])/d['total_bytes'])*100)
+		frequency=100+percentage
+		tones.beep(frequency, 50)
 	elif d['status'] == 'finished':
 		ui.message(_("Download complete. Converting video."))
 	elif d['status'] == 'error':
 		ui.message(_("Download error."))
+
+def download(selection):
+	global _IS_DOWNLOADING
+	currentDirectory=os.getcwdu()
+	ydl_opts={
+		'logger':speakingLogger(),
+		'progress_hooks':[speakingHook],
+		'quiet':True,
+		'format':'bestaudio/best',
+		'postprocessors':[{
+			'key':'FFmpegExtractAudio',
+			'preferredcodec':addonConfig.conf['converter']['format'],
+			'preferredquality':addonConfig.conf['converter']['quality'],
+			}],
+	}
+	urlPattern=re.compile(r"(^|[ \t\r\n])((http|https|www\.):?(([A-Za-z0-9$_.+!*(),;/?:@&~=-])|%[A-Fa-f0-9]{2}){2,}(#([a-zA-Z0-9][a-zA-Z0-9$_.+!*(),;/?:@&~=%-]*))?([A-Za-z0-9$_+!*();/?:~-]))")
+	address=urlPattern.search(selection)
+	if address:
+		try:
+			os.chdir(addonConfig.conf['downloader']['path'])
+			_IS_DOWNLOADING=True
+			ui.message(_("Starting download."))
+			with youtube_dl.YoutubeDL(ydl_opts) as ydl:
+				ydl.download([unicode(address.group().strip())])
+				ui.message(_("Done."))
+				os.chdir(currentDirectory)
+				_IS_DOWNLOADING=False
+		except:
+			ui.message(_("Download error."))
+			_IS_DOWNLOADING=False
+	else:
+			# Translators: This message is spoken if selection doesn't contain any URL address.
+			ui.message(_("Invalid URL address."))
 
 class GlobalPlugin(globalPluginHandler.GlobalPlugin):
 
@@ -125,17 +164,9 @@ class GlobalPlugin(globalPluginHandler.GlobalPlugin):
 			pass
 
 	def script_downloadVideo(self, gesture):
-		currentDirectory=os.getcwdu()
-		ydl_opts={
-			'logger':speakingLogger(),
-			'progress_hooks':[speakingHook],
-			'format':'bestaudio/best',
-			'postprocessors':[{
-				'key':'FFmpegExtractAudio',
-				'preferredcodec':addonConfig.conf['converter']['format'],
-				'preferredquality':addonConfig.conf['converter']['quality'],
-				}],
-		}
+		if _IS_DOWNLOADING:
+			ui.message(_("Already downloading."))
+			return
 		obj=api.getFocusObject()
 		treeInterceptor=obj.treeInterceptor
 		if hasattr(treeInterceptor,'TextInfo') and not treeInterceptor.passThrough:
@@ -148,18 +179,7 @@ class GlobalPlugin(globalPluginHandler.GlobalPlugin):
 			# Translators: This message is spoken if there's no selection.
 			ui.message(_("Nothing selected."))
 		else:
-			urlPattern=re.compile(r"(^|[ \t\r\n])((http|https|www\.):?(([A-Za-z0-9$_.+!*(),;/?:@&~=-])|%[A-Fa-f0-9]{2}){2,}(#([a-zA-Z0-9][a-zA-Z0-9$_.+!*(),;/?:@&~=%-]*))?([A-Za-z0-9$_+!*();/?:~-]))")
-			address=urlPattern.search(info.text)
-			if address:
-				os.chdir(addonConfig.conf['downloader']['path'])
-				ui.message(_("Starting download."))
-				with youtube_dl.YoutubeDL(ydl_opts) as ydl:
-					ydl.download([unicode(address.group().strip())])
-				ui.message(_("Done."))
-				os.chdir(currentDirectory)
-			else:
-				# Translators: This message is spoken if selection doesn't contain any URL address.
-				ui.message(_("Invalid URL address."))
+			threading.Thread(target=download, args=(info.text,)).start()
 
 	__gestures={
 		"kb:NVDA+F8":"downloadVideo"
