@@ -90,6 +90,7 @@ def download(selection):
 		except:
 			ui.message(_("Download error."))
 			_IS_DOWNLOADING=False
+			os.chdir(currentDirectory)
 	else:
 			# Translators: This message is spoken if selection doesn't contain any URL address.
 			ui.message(_("Invalid URL address."))
