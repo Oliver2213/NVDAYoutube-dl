@@ -36,6 +36,7 @@ import xml
 xml.__path__.append(os.path.join(PLUGIN_DIR, "lib", "xml"))
 import youtube_dl
 del sys.path[-1]
+_IS_DOWNLOADING=False # checks if download is in progress
 
 class speakingLogger(object):
 
@@ -61,10 +62,12 @@ def speakingHook(d):
 		ui.message(_("Download error."))
 
 def download(selection):
+	global _IS_DOWNLOADING
 	currentDirectory=os.getcwdu()
 	ydl_opts={
 		'logger':speakingLogger(),
 		'progress_hooks':[speakingHook],
+		'quiet':True,
 		'format':'bestaudio/best',
 		'postprocessors':[{
 			'key':'FFmpegExtractAudio',
@@ -76,11 +79,13 @@ def download(selection):
 	address=urlPattern.search(selection)
 	if address:
 		os.chdir(addonConfig.conf['downloader']['path'])
+		_IS_DOWNLOADING=True
 		ui.message(_("Starting download."))
 		with youtube_dl.YoutubeDL(ydl_opts) as ydl:
 			ydl.download([unicode(address.group().strip())])
 			ui.message(_("Done."))
 			os.chdir(currentDirectory)
+			_IS_DOWNLOADING=False
 	else:
 			# Translators: This message is spoken if selection doesn't contain any URL address.
 			ui.message(_("Invalid URL address."))
@@ -146,6 +151,9 @@ class GlobalPlugin(globalPluginHandler.GlobalPlugin):
 			pass
 
 	def script_downloadVideo(self, gesture):
+		if _IS_DOWNLOADING:
+			ui.message(_("Already downloading."))
+			return
 		obj=api.getFocusObject()
 		treeInterceptor=obj.treeInterceptor
 		if hasattr(treeInterceptor,'TextInfo') and not treeInterceptor.passThrough:
