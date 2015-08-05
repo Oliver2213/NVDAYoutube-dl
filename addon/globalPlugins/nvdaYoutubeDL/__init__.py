@@ -78,13 +78,17 @@ def download(selection):
 	urlPattern=re.compile(r"(^|[ \t\r\n])((http|https|www\.):?(([A-Za-z0-9$_.+!*(),;/?:@&~=-])|%[A-Fa-f0-9]{2}){2,}(#([a-zA-Z0-9][a-zA-Z0-9$_.+!*(),;/?:@&~=%-]*))?([A-Za-z0-9$_+!*();/?:~-]))")
 	address=urlPattern.search(selection)
 	if address:
-		os.chdir(addonConfig.conf['downloader']['path'])
-		_IS_DOWNLOADING=True
-		ui.message(_("Starting download."))
-		with youtube_dl.YoutubeDL(ydl_opts) as ydl:
-			ydl.download([unicode(address.group().strip())])
-			ui.message(_("Done."))
-			os.chdir(currentDirectory)
+		try:
+			os.chdir(addonConfig.conf['downloader']['path'])
+			_IS_DOWNLOADING=True
+			ui.message(_("Starting download."))
+			with youtube_dl.YoutubeDL(ydl_opts) as ydl:
+				ydl.download([unicode(address.group().strip())])
+				ui.message(_("Done."))
+				os.chdir(currentDirectory)
+				_IS_DOWNLOADING=False
+		except:
+			ui.message(_("Download error."))
 			_IS_DOWNLOADING=False
 	else:
 			# Translators: This message is spoken if selection doesn't contain any URL address.
