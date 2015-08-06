@@ -19,6 +19,7 @@ import interface
 import gui
 import os
 import sys
+import update_ydl
 import wx
 import threading
 import re
@@ -155,6 +156,7 @@ class GlobalPlugin(globalPluginHandler.GlobalPlugin):
 			addonConfig.save()
 
 	def onUpdateYDL(evt):
+		YDLVer = youtube_dl.version.__version__
 		
 
 	def terminate(self):
