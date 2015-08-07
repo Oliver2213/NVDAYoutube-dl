@@ -172,6 +172,7 @@ class GlobalPlugin(globalPluginHandler.GlobalPlugin):
 			ui.message(_("Nothing selected."))
 		else:
 			threading.Thread(target=download, args=(info.text,)).start()
+	script_downloadVideo.__doc__=_(u"Downloads a video with Youtube-DL from currently selected URL address.")
 
 	__gestures={
 		"kb:NVDA+F8":"downloadVideo"
