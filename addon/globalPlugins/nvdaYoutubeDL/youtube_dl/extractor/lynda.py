@@ -11,13 +11,13 @@ from ..compat import (
 )
 from ..utils import (
     ExtractorError,
+    clean_html,
     int_or_none,
 )
 
 
 class LyndaBaseIE(InfoExtractor):
     _LOGIN_URL = 'https://www.lynda.com/login/login.aspx'
-    _SUCCESSFUL_LOGIN_REGEX = r'isLoggedIn: true'
     _ACCOUNT_CREDENTIALS_HINT = 'Use --username and --password options to provide lynda.com account credentials.'
     _NETRC_MACHINE = 'lynda'
 
@@ -41,7 +41,7 @@ class LyndaBaseIE(InfoExtractor):
             request, None, 'Logging in as %s' % username)
 
         # Not (yet) logged in
-        m = re.search(r'loginResultJson = \'(?P<json>[^\']+)\';', login_page)
+        m = re.search(r'loginResultJson\s*=\s*\'(?P<json>[^\']+)\';', login_page)
         if m is not None:
             response = m.group('json')
             response_json = json.loads(response)
@@ -70,7 +70,16 @@ class LyndaBaseIE(InfoExtractor):
                     request, None,
                     'Confirming log in and log out from another device')
 
-        if re.search(self._SUCCESSFUL_LOGIN_REGEX, login_page) is None:
+        if all(not re.search(p, login_page) for p in ('isLoggedIn\s*:\s*true', r'logout\.aspx', r'>Log out<')):
+            if 'login error' in login_page:
+                mobj = re.search(
+                    r'(?s)<h1[^>]+class="topmost">(?P<title>[^<]+)</h1>\s*<div>(?P<description>.+?)</div>',
+                    login_page)
+                if mobj:
+                    raise ExtractorError(
+                        'lynda returned error: %s - %s'
+                        % (mobj.group('title'), clean_html(mobj.group('description'))),
+                        expected=True)
             raise ExtractorError('Unable to log in')
 
 

@@ -7,12 +7,17 @@ import random
 
 from .common import InfoExtractor
 from ..compat import (
+    compat_parse_qs,
     compat_str,
     compat_urllib_parse,
+    compat_urllib_parse_urlparse,
     compat_urllib_request,
+    compat_urlparse,
 )
 from ..utils import (
     ExtractorError,
+    int_or_none,
+    parse_duration,
     parse_iso8601,
 )
 
@@ -23,7 +28,7 @@ class TwitchBaseIE(InfoExtractor):
     _API_BASE = 'https://api.twitch.tv'
     _USHER_BASE = 'http://usher.twitch.tv'
     _LOGIN_URL = 'https://secure.twitch.tv/login'
-    _LOGIN_POST_URL = 'https://passport.twitch.tv/authorize'
+    _LOGIN_POST_URL = 'https://passport.twitch.tv/authentications/new'
     _NETRC_MACHINE = 'twitch'
 
     def _handle_error(self, response):
@@ -66,8 +71,15 @@ class TwitchBaseIE(InfoExtractor):
             'password': password.encode('utf-8'),
         })
 
+        post_url = self._search_regex(
+            r'<form[^>]+action=(["\'])(?P<url>.+?)\1', login_page,
+            'post url', default=self._LOGIN_POST_URL, group='url')
+
+        if not post_url.startswith('http'):
+            post_url = compat_urlparse.urljoin(self._LOGIN_URL, post_url)
+
         request = compat_urllib_request.Request(
-            self._LOGIN_POST_URL, compat_urllib_parse.urlencode(login_form).encode('utf-8'))
+            post_url, compat_urllib_parse.urlencode(login_form).encode('utf-8'))
         request.add_header('Referer', self._LOGIN_URL)
         response = self._download_webpage(
             request, None, 'Logging in as %s' % username)
@@ -129,14 +141,14 @@ class TwitchItemBaseIE(TwitchBaseIE):
     def _extract_info(self, info):
         return {
             'id': info['_id'],
-            'title': info['title'],
-            'description': info['description'],
-            'duration': info['length'],
-            'thumbnail': info['preview'],
-            'uploader': info['channel']['display_name'],
-            'uploader_id': info['channel']['name'],
-            'timestamp': parse_iso8601(info['recorded_at']),
-            'view_count': info['views'],
+            'title': info.get('title') or 'Untitled Broadcast',
+            'description': info.get('description'),
+            'duration': int_or_none(info.get('length')),
+            'thumbnail': info.get('preview'),
+            'uploader': info.get('channel', {}).get('display_name'),
+            'uploader_id': info.get('channel', {}).get('name'),
+            'timestamp': parse_iso8601(info.get('recorded_at')),
+            'view_count': int_or_none(info.get('views')),
         }
 
     def _real_extract(self, url):
@@ -184,8 +196,8 @@ class TwitchVodIE(TwitchItemBaseIE):
     _ITEM_TYPE = 'vod'
     _ITEM_SHORTCUT = 'v'
 
-    _TEST = {
-        'url': 'http://www.twitch.tv/riotgames/v/6528877',
+    _TESTS = [{
+        'url': 'http://www.twitch.tv/riotgames/v/6528877?t=5m10s',
         'info_dict': {
             'id': 'v6528877',
             'ext': 'mp4',
@@ -197,12 +209,32 @@ class TwitchVodIE(TwitchItemBaseIE):
             'uploader': 'Riot Games',
             'uploader_id': 'riotgames',
             'view_count': int,
+            'start_time': 310,
         },
         'params': {
             # m3u8 download
             'skip_download': True,
         },
-    }
+    }, {
+        # Untitled broadcast (title is None)
+        'url': 'http://www.twitch.tv/belkao_o/v/11230755',
+        'info_dict': {
+            'id': 'v11230755',
+            'ext': 'mp4',
+            'title': 'Untitled Broadcast',
+            'thumbnail': 're:^https?://.*\.jpg$',
+            'duration': 1638,
+            'timestamp': 1439746708,
+            'upload_date': '20150816',
+            'uploader': 'BelkAO_o',
+            'uploader_id': 'belkao_o',
+            'view_count': int,
+        },
+        'params': {
+            # m3u8 download
+            'skip_download': True,
+        },
+    }]
 
     def _real_extract(self, url):
         item_id = self._match_id(url)
@@ -216,6 +248,12 @@ class TwitchVodIE(TwitchItemBaseIE):
             item_id, 'mp4')
         self._prefer_source(formats)
         info['formats'] = formats
+
+        parsed_url = compat_urllib_parse_urlparse(url)
+        query = compat_parse_qs(parsed_url.query)
+        if 't' in query:
+            info['start_time'] = parse_duration(query['t'][0])
+
         return info
 
 

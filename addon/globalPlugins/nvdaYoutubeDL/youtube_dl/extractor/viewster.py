@@ -5,11 +5,13 @@ from .common import InfoExtractor
 from ..compat import (
     compat_urllib_request,
     compat_urllib_parse,
+    compat_urllib_parse_unquote,
 )
 from ..utils import (
     determine_ext,
     int_or_none,
     parse_iso8601,
+    HEADRequest,
 )
 
 
@@ -62,7 +64,6 @@ class ViewsterIE(InfoExtractor):
     }]
 
     _ACCEPT_HEADER = 'application/json, text/javascript, */*; q=0.01'
-    _AUTH_TOKEN = '/YqhSYsx8EaU9Bsta3ojlA=='
 
     def _download_json(self, url, video_id, note='Downloading JSON metadata', fatal=True):
         request = compat_urllib_request.Request(url)
@@ -72,6 +73,10 @@ class ViewsterIE(InfoExtractor):
 
     def _real_extract(self, url):
         video_id = self._match_id(url)
+        # Get 'api_token' cookie
+        self._request_webpage(HEADRequest(url), video_id)
+        cookies = self._get_cookies(url)
+        self._AUTH_TOKEN = compat_urllib_parse_unquote(cookies['api_token'].value)
 
         info = self._download_json(
             'https://public-api.viewster.com/search/%s' % video_id,

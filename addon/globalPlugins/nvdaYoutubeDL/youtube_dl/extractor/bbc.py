@@ -20,7 +20,9 @@ class BBCCoUkIE(InfoExtractor):
     IE_DESC = 'BBC iPlayer'
     _VALID_URL = r'https?://(?:www\.)?bbc\.co\.uk/(?:(?:(?:programmes|iplayer(?:/[^/]+)?/(?:episode|playlist))/)|music/clips[/#])(?P<id>[\da-z]{8})'
 
-    _MEDIASELECTOR_URL = 'http://open.live.bbc.co.uk/mediaselector/5/select/version/2.0/mediaset/pc/vpid/%s'
+    _MEDIASELECTOR_URLS = [
+        'http://open.live.bbc.co.uk/mediaselector/5/select/version/2.0/mediaset/pc/vpid/%s',
+    ]
 
     _TESTS = [
         {
@@ -162,6 +164,10 @@ class BBCCoUkIE(InfoExtractor):
         }
     ]
 
+    class MediaSelectionError(Exception):
+        def __init__(self, id):
+            self.id = id
+
     def _extract_asx_playlist(self, connection, programme_id):
         asx = self._download_xml(connection.get('href'), programme_id, 'Downloading ASX playlist')
         return [ref.get('href') for ref in asx.findall('./Entry/ref')]
@@ -212,8 +218,7 @@ class BBCCoUkIE(InfoExtractor):
     def _extract_medias(self, media_selection):
         error = media_selection.find('./{http://bbc.co.uk/2008/mp/mediaselection}error')
         if error is not None:
-            raise ExtractorError(
-                '%s returned error: %s' % (self.IE_NAME, error.get('id')), expected=True)
+            raise BBCCoUkIE.MediaSelectionError(error.get('id'))
         return media_selection.findall('./{http://bbc.co.uk/2008/mp/mediaselection}media')
 
     def _extract_connections(self, media):
@@ -270,9 +275,23 @@ class BBCCoUkIE(InfoExtractor):
             ]
         return subtitles
 
+    def _raise_extractor_error(self, media_selection_error):
+        raise ExtractorError(
+            '%s returned error: %s' % (self.IE_NAME, media_selection_error.id),
+            expected=True)
+
     def _download_media_selector(self, programme_id):
-        return self._download_media_selector_url(
-            self._MEDIASELECTOR_URL % programme_id, programme_id)
+        last_exception = None
+        for mediaselector_url in self._MEDIASELECTOR_URLS:
+            try:
+                return self._download_media_selector_url(
+                    mediaselector_url % programme_id, programme_id)
+            except BBCCoUkIE.MediaSelectionError as e:
+                if e.id == 'notukerror':
+                    last_exception = e
+                    continue
+                self._raise_extractor_error(e)
+        self._raise_extractor_error(last_exception)
 
     def _download_media_selector_url(self, url, programme_id=None):
         try:
@@ -297,7 +316,6 @@ class BBCCoUkIE(InfoExtractor):
                 formats.extend(self._extract_video(media, programme_id))
             elif kind == 'captions':
                 subtitles = self.extract_subtitles(media, programme_id)
-
         return formats, subtitles
 
     def _download_playlist(self, playlist_id):
@@ -426,9 +444,14 @@ class BBCIE(BBCCoUkIE):
     IE_DESC = 'BBC'
     _VALID_URL = r'https?://(?:www\.)?bbc\.(?:com|co\.uk)/(?:[^/]+/)+(?P<id>[^/#?]+)'
 
-    # fails with notukerror for some videos
-    # _MEDIASELECTOR_URL = 'http://open.live.bbc.co.uk/mediaselector/4/mtis/stream/%s'
-    _MEDIASELECTOR_URL = 'http://open.live.bbc.co.uk/mediaselector/5/select/version/2.0/mediaset/journalism-pc/vpid/%s'
+    _MEDIASELECTOR_URLS = [
+        # Provides more formats, namely direct mp4 links, but fails on some videos with
+        # notukerror for non UK (?) users (e.g.
+        # http://www.bbc.com/travel/story/20150625-sri-lankas-spicy-secret)
+        'http://open.live.bbc.co.uk/mediaselector/4/mtis/stream/%s',
+        # Provides fewer formats, but works everywhere for everybody (hopefully)
+        'http://open.live.bbc.co.uk/mediaselector/5/select/version/2.0/mediaset/journalism-pc/vpid/%s',
+    ]
 
     _TESTS = [{
         # article with multiple videos embedded with data-media-meta containing
@@ -463,7 +486,7 @@ class BBCIE(BBCCoUkIE):
         'url': 'http://www.bbc.com/news/world-europe-32041533',
         'info_dict': {
             'id': 'p02mprgb',
-            'ext': 'flv',
+            'ext': 'mp4',
             'title': 'Aerial footage showed the site of the crash in the Alps - courtesy BFM TV',
             'duration': 47,
             'timestamp': 1427219242,
@@ -504,6 +527,18 @@ class BBCIE(BBCCoUkIE):
             'skip_download': True,
         }
     }, {
+        # single video from video playlist embedded with vxp-playlist-data JSON
+        'url': 'http://www.bbc.com/news/video_and_audio/must_see/33376376',
+        'info_dict': {
+            'id': 'p02w6qjc',
+            'ext': 'mp4',
+            'title': '''Judge Mindy Glazer: "I'm sorry to see you here... I always wondered what happened to you"''',
+            'duration': 56,
+        },
+        'params': {
+            'skip_download': True,
+        }
+    }, {
         # single video story with digitalData
         'url': 'http://www.bbc.com/travel/story/20150625-sri-lankas-spicy-secret',
         'info_dict': {
@@ -523,7 +558,7 @@ class BBCIE(BBCCoUkIE):
         'url': 'http://www.bbc.com/autos/story/20130513-hyundais-rock-star',
         'info_dict': {
             'id': 'p018zqqg',
-            'ext': 'flv',
+            'ext': 'mp4',
             'title': 'Hyundai Santa Fe Sport: Rock star',
             'description': 'md5:b042a26142c4154a6e472933cf20793d',
             'timestamp': 1368473503,
@@ -538,7 +573,7 @@ class BBCIE(BBCCoUkIE):
         'url': 'http://www.bbc.com/sport/0/football/33653409',
         'info_dict': {
             'id': 'p02xycnp',
-            'ext': 'flv',
+            'ext': 'mp4',
             'title': 'Transfers: Cristiano Ronaldo to Man Utd, Arsenal to spend?',
             'description': 'md5:398fca0e2e701c609d726e034fa1fc89',
             'duration': 140,
@@ -672,13 +707,36 @@ class BBCIE(BBCCoUkIE):
 
         if not medias:
             # Single video article (e.g. http://www.bbc.com/news/video_and_audio/international)
-            media_asset_page = self._parse_json(
+            media_asset = self._search_regex(
+                r'mediaAssetPage\.init\(\s*({.+?}), "/',
+                webpage, 'media asset', default=None)
+            if media_asset:
+                media_asset_page = self._parse_json(media_asset, playlist_id, fatal=False)
+                medias = []
+                for video in media_asset_page.get('videos', {}).values():
+                    medias.extend(video.values())
+
+        if not medias:
+            # Multiple video playlist with single `now playing` entry (e.g.
+            # http://www.bbc.com/news/video_and_audio/must_see/33767813)
+            vxp_playlist = self._parse_json(
                 self._search_regex(
-                    r'mediaAssetPage\.init\(\s*({.+?}), "/', webpage, 'media asset'),
+                    r'<script[^>]+class="vxp-playlist-data"[^>]+type="application/json"[^>]*>([^<]+)</script>',
+                    webpage, 'playlist data'),
                 playlist_id)
-            medias = []
-            for video in media_asset_page.get('videos', {}).values():
-                medias.extend(video.values())
+            playlist_medias = []
+            for item in vxp_playlist:
+                media = item.get('media')
+                if not media:
+                    continue
+                playlist_medias.append(media)
+                # Download single video if found media with asset id matching the video id from URL
+                if item.get('advert', {}).get('assetId') == playlist_id:
+                    medias = [media]
+                    break
+            # Fallback to the whole playlist
+            if not medias:
+                medias = playlist_medias
 
         entries = []
         for num, media_meta in enumerate(medias, start=1):
