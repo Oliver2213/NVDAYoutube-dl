@@ -13,6 +13,7 @@ import languageHandler
 import scriptHandler
 import ui
 import tones
+import nvwave
 import config
 import addonConfig
 import interface
@@ -31,6 +32,7 @@ addonConfig.load()
 addonHandler.initTranslation()
 
 PLUGIN_DIR=os.path.dirname(__file__)
+SOUNDS_DIR=os.path.join(PLUGIN_DIR, "waves")
 sys.path.append(os.path.join(PLUGIN_DIR, "lib"))
 import xml 
 xml.__path__.append(os.path.join(PLUGIN_DIR, "lib", "xml"))
@@ -84,13 +86,15 @@ def download(selection):
 			ui.message(_("Starting download."))
 			with youtube_dl.YoutubeDL(ydl_opts) as ydl:
 				ydl.download([unicode(address.group().strip())])
-				ui.message(_("Done."))
 				os.chdir(currentDirectory)
 				_IS_DOWNLOADING=False
+				nvwave.playWaveFile(os.path.join(SOUNDS_DIR, "done.wav"))
+				ui.message(_("Done."))
 		except:
-			ui.message(_("Download error."))
 			_IS_DOWNLOADING=False
 			os.chdir(currentDirectory)
+			nvwave.playWaveFile(os.path.join(SOUNDS_DIR, "error.wav"))
+			ui.message(_("Download error."))
 	else:
 			# Translators: This message is spoken if selection doesn't contain any URL address.
 			ui.message(_("Invalid URL address."))
