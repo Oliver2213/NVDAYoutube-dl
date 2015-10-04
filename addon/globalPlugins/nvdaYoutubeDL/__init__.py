@@ -130,7 +130,7 @@ class GlobalPlugin(globalPluginHandler.GlobalPlugin):
 		gui.mainFrame.sysTrayIcon.Bind(wx.EVT_MENU, self.onChooseDownloadFolderClicked, self.chooseDownloadFolderMenuItem)
 		self.youtubeDownloaderMenuItem=self.menu.InsertMenu(2, wx.ID_ANY,
 		# Translators: the name of addon submenu.
-		_("&Youtube downloader"), self.youtubeDownloaderSubmenu)
+		_("&Youtube-dl"), self.youtubeDownloaderSubmenu)
 
 	def onAudioConverterOptionsClicked(self, evt):
 		gui.mainFrame._popupSettingsDialog(interface.audioConverterOptionsDialog)
