@@ -128,6 +128,13 @@ class GlobalPlugin(globalPluginHandler.GlobalPlugin):
 		# Translators: the tooltip text for an item of addon submenu.
 		_("Opens a Windows dialog box to choose a folder in which videos will be downloaded"))
 		gui.mainFrame.sysTrayIcon.Bind(wx.EVT_MENU, self.onChooseDownloadFolderClicked, self.chooseDownloadFolderMenuItem)
+		self.openSiteMenuItem=self.youtubeDownloaderSubmenu.Append(wx.ID_ANY,
+		# Translators: A lebel that means to open the website of this add-on
+		_("Open the NVDA Youtube-dl &website..."),
+		# Translators: the tooltip text for a menu ite that opens the add-on website
+		_("Opens the website for this add-on"))
+		gui.mainFrame.sysTrayIcon.Bind(wx.EVT_MENU, lambda evt: os.startfile("https://github.com/oliver2213/NVDAYoutube-dl"), self.openSiteMenuItem)
+		
 		self.youtubeDownloaderMenuItem=self.menu.InsertMenu(2, wx.ID_ANY,
 		# Translators: the name of addon submenu.
 		_("&Youtube-dl"), self.youtubeDownloaderSubmenu)
