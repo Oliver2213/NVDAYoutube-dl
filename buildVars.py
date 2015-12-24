@@ -11,23 +11,23 @@ addon_info = {
 	# for previously unpublished addons, please follow the community guidelines at:
 	# https://bitbucket.org/nvdaaddonteam/todo/raw/master/guideLines.txt
 	# add-on Name, internal for nvda
-	"addon_name" : "nvdaYoutubeDL",
+	"addon_name" : "NVDAYoutubeDL",
 	# Add-on summary, usually the user visible name of the addon.
 	# Translators: Summary for this add-on to be shown on installation and add-on information.
 	"addon_summary" : _("NVDA Youtube-DL"),
 	# Add-on description
 	# Translators: Long description to be shown for this add-on on add-on information from add-ons manager
-	"addon_description" : _("""This addon integrates your NVDA screen reader with Youtube-DL. Youtube-DL is a small program to download videos from YouTube and almost 700 more sites.
+	"addon_description" : _("""This addon integrates your NVDA screen reader with Youtube-DL. Youtube-DL is an amazing program to download videos from YouTube and almost 700 more sites.
 Just about any site you can think of is supported. If you aren't sure if a particular one is, try downloading something from it.
 To use this addon, you just select a URL address of the video by using standard Windows text selection commands, and then press NVDA+F8. The selected URL will be detected, and your video will be downloaded and converted automatically.
 Go to NVDA menu, Youtube-dl submenu to configure download formats and other options.
 """),
 	# version
-	"addon_version" : "1.0dev",
+	"addon_version" : "1.1dev",
 	# Author(s)
 	"addon_author" : u"Hrvoje Katić <info@hrvojekatic.com>, Blake Oliver <oliver22213@me.com>",
 	# URL for the add-on documentation support
-	"addon_url" : "www.hrvojekatic.com",
+	"addon_url" : "https://github.com/oliver2213/NVDAYoutube-dl",
 	# Documentation file name
 	"addon_docFileName" : "readme.html",
 }
