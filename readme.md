@@ -15,17 +15,17 @@ Please read the following information in this section carefully.
 
 ###Legal notices
 
-Although this addon and Youtube-DL are free, please keep in mind that downloading copyrighted material is illegal. Before you download anything, you agree that you will download only non-copyrighted material, and that you will be using downloaded material for your personal use only. Before downloading videos, please read terms of use for the service you are downloading from. If you don't agree with terms of use, please remove downloaded files in within 24 hours from your computer!
+Although this addon and Youtube-DL are free, please keep in mind that downloading copyrighted material is illegal. Before you download anything, you agree that you will download only non-copyrighted material, to hold blameless the creators, maintainers, and other contributers to the Youtube-DL project, as well as this add-on, and that you will be using downloaded material for your personal use only.
 
 ###External converters
 
 Youtube-DL requires some external converters for getting your videos converted to MP3 and some other formats. This addon is configured to use FFMPEG converter by default, which needs to be obtained separately due to license restrictions. Even if you don't get FFMPEG, you may still download a video but the resulting file will be in M4A format.
 Since FFMPEG is tricky to build manually on Windows, you can find pre-compiled binaries for 32-bit and 64-bit Windows [here](http://ffmpeg.zeranoe.com/builds/)  
-If you have a 32-bit Windows, please download 32-bit static binaries. For 64-bit Windows, download 64-bit static binaries. The required binaries are located in 'bin' subfolder found inside the downloaded .7z archive. Copy all .exe files within this folder into your \Windows\System32 folder, or \Windows\SysWOW64 folder in case of 64-bit Windows. If you're still having problems with FFMPEG.exe detection on 64-bit Windows, try downloading both 32-bit and 64-bit static binaries and copy them to your System32 and SysWOW64 folders. Then restart NVDA if needed.
+If you have a 32-bit Windows, please download the 32-bit static binaries. For 64-bit Windows, download the 64-bit static binaries. The required files are located in the 'bin' subfolder found inside the downloaded .7z archive. Copy all the '.exe' files within this folder into your \Windows\System32 folder, or \Windows\SysWOW64 folder in case of 64-bit Windows. If you're still having problems with FFMPEG.exe detection on 64-bit Windows, try downloading both 32-bit and 64-bit static binaries and copy them to your System32 and SysWOW64 folders. Then restart NVDA if needed.
 
 ##Basic usage instructions
 
-###Example 1: Downloading currently playing Youtube video on Youtube Web site
+###Example 1: Downloading the currently playing Youtube video on Youtube.com
 
 1. Open your Web browser.
 2. Search for any video on Youtube that you would like to download.
