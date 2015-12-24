@@ -4,7 +4,9 @@ from __future__ import unicode_literals
 import re
 
 from .common import InfoExtractor
+from ..compat import compat_urlparse
 from ..utils import (
+    determine_ext,
     ExtractorError,
     float_or_none,
     parse_duration,
@@ -47,12 +49,22 @@ class NRKIE(InfoExtractor):
             'http://v8.psapi.nrk.no/mediaelement/%s' % video_id,
             video_id, 'Downloading media JSON')
 
-        if data['usageRights']['isGeoBlocked']:
-            raise ExtractorError(
-                'NRK har ikke rettig-heter til å vise dette programmet utenfor Norge',
-                expected=True)
+        media_url = data.get('mediaUrl')
 
-        video_url = data['mediaUrl'] + '?hdcore=3.5.0&plugin=aasp-3.5.0.151.81'
+        if not media_url:
+            if data['usageRights']['isGeoBlocked']:
+                raise ExtractorError(
+                    'NRK har ikke rettigheter til å vise dette programmet utenfor Norge',
+                    expected=True)
+
+        if determine_ext(media_url) == 'f4m':
+            formats = self._extract_f4m_formats(
+                media_url + '?hdcore=3.5.0&plugin=aasp-3.5.0.151.81', video_id, f4m_id='hds')
+        else:
+            formats = [{
+                'url': media_url,
+                'ext': 'flv',
+            }]
 
         duration = parse_duration(data.get('duration'))
 
@@ -66,12 +78,11 @@ class NRKIE(InfoExtractor):
 
         return {
             'id': video_id,
-            'url': video_url,
-            'ext': 'flv',
             'title': data['title'],
             'description': data['description'],
             'duration': duration,
             'thumbnail': thumbnail,
+            'formats': formats,
         }
 
 
@@ -196,20 +207,6 @@ class NRKTVIE(InfoExtractor):
         }
     ]
 
-    def _debug_print(self, txt):
-        if self._downloader.params.get('verbose', False):
-            self.to_screen('[debug] %s' % txt)
-
-    def _get_subtitles(self, subtitlesurl, video_id, baseurl):
-        url = "%s%s" % (baseurl, subtitlesurl)
-        self._debug_print('%s: Subtitle url: %s' % (video_id, url))
-        captions = self._download_xml(
-            url, video_id, 'Downloading subtitles')
-        lang = captions.get('lang', 'no')
-        return {lang: [
-            {'ext': 'ttml', 'url': url},
-        ]}
-
     def _extract_f4m(self, manifest_url, video_id):
         return self._extract_f4m_formats(
             manifest_url + '?hdcore=3.1.1&plugin=aasp-3.1.1.69.124', video_id, f4m_id='hds')
@@ -218,7 +215,7 @@ class NRKTVIE(InfoExtractor):
         mobj = re.match(self._VALID_URL, url)
         video_id = mobj.group('id')
         part_id = mobj.group('part_id')
-        baseurl = mobj.group('baseurl')
+        base_url = mobj.group('baseurl')
 
         webpage = self._download_webpage(url, video_id)
 
@@ -278,11 +275,14 @@ class NRKTVIE(InfoExtractor):
         self._sort_formats(formats)
 
         subtitles_url = self._html_search_regex(
-            r'data-subtitlesurl[ ]*=[ ]*"([^"]+)"',
-            webpage, 'subtitle URL', default=None)
-        subtitles = None
+            r'data-subtitlesurl\s*=\s*(["\'])(?P<url>.+?)\1',
+            webpage, 'subtitle URL', default=None, group='url')
+        subtitles = {}
         if subtitles_url:
-            subtitles = self.extract_subtitles(subtitles_url, video_id, baseurl)
+            subtitles['no'] = [{
+                'ext': 'ttml',
+                'url': compat_urlparse.urljoin(base_url, subtitles_url),
+            }]
 
         return {
             'id': video_id,

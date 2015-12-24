@@ -7,15 +7,13 @@ import itertools
 
 from .common import InfoExtractor
 
-from ..compat import (
-    compat_str,
-    compat_urllib_request,
-)
 from ..utils import (
-    ExtractorError,
     determine_ext,
+    error_to_compat_str,
+    ExtractorError,
     int_or_none,
     parse_iso8601,
+    sanitized_Request,
     str_to_int,
     unescapeHTML,
 )
@@ -25,7 +23,7 @@ class DailymotionBaseInfoExtractor(InfoExtractor):
     @staticmethod
     def _build_request(url):
         """Build a request with the family filter disabled"""
-        request = compat_urllib_request.Request(url)
+        request = sanitized_Request(url)
         request.add_header('Cookie', 'family_filter=off; ff=off')
         return request
 
@@ -96,6 +94,16 @@ class DailymotionIE(DailymotionBaseInfoExtractor):
                 'uploader': 'HotWaves1012',
                 'age_limit': 18,
             }
+        },
+        # geo-restricted, player v5
+        {
+            'url': 'http://www.dailymotion.com/video/xhza0o',
+            'only_matching': True,
+        },
+        # with subtitles
+        {
+            'url': 'http://www.dailymotion.com/video/x20su5f_the-power-of-nightmares-1-the-rise-of-the-politics-of-fear-bbc-2004_news',
+            'only_matching': True,
         }
     ]
 
@@ -119,11 +127,16 @@ class DailymotionIE(DailymotionBaseInfoExtractor):
             webpage, 'comment count', fatal=False))
 
         player_v5 = self._search_regex(
-            r'playerV5\s*=\s*dmp\.create\([^,]+?,\s*({.+?})\);',
+            [r'buildPlayer\(({.+?})\);\n',  # See https://github.com/rg3/youtube-dl/issues/7826
+             r'playerV5\s*=\s*dmp\.create\([^,]+?,\s*({.+?})\);',
+             r'buildPlayer\(({.+?})\);'],
             webpage, 'player v5', default=None)
         if player_v5:
             player = self._parse_json(player_v5, video_id)
             metadata = player['metadata']
+
+            self._check_error(metadata)
+
             formats = []
             for quality, media_list in metadata['qualities'].items():
                 for media in media_list:
@@ -133,9 +146,17 @@ class DailymotionIE(DailymotionBaseInfoExtractor):
                     type_ = media.get('type')
                     if type_ == 'application/vnd.lumberjack.manifest':
                         continue
-                    if type_ == 'application/x-mpegURL' or determine_ext(media_url) == 'm3u8':
-                        formats.extend(self._extract_m3u8_formats(
-                            media_url, video_id, 'mp4', m3u8_id='hls'))
+                    ext = determine_ext(media_url)
+                    if type_ == 'application/x-mpegURL' or ext == 'm3u8':
+                        m3u8_formats = self._extract_m3u8_formats(
+                            media_url, video_id, 'mp4', m3u8_id='hls', fatal=False)
+                        if m3u8_formats:
+                            formats.extend(m3u8_formats)
+                    elif type_ == 'application/f4m' or ext == 'f4m':
+                        f4m_formats = self._extract_f4m_formats(
+                            media_url, video_id, preference=-1, f4m_id='hds', fatal=False)
+                        if f4m_formats:
+                            formats.extend(f4m_formats)
                     else:
                         f = {
                             'url': media_url,
@@ -158,11 +179,13 @@ class DailymotionIE(DailymotionBaseInfoExtractor):
             uploader_id = metadata.get('owner', {}).get('id')
 
             subtitles = {}
-            for subtitle_lang, subtitle in metadata.get('subtitles', {}).get('data', {}).items():
-                subtitles[subtitle_lang] = [{
-                    'ext': determine_ext(subtitle_url),
-                    'url': subtitle_url,
-                } for subtitle_url in subtitle.get('urls', [])]
+            subtitles_data = metadata.get('subtitles', {}).get('data', {})
+            if subtitles_data and isinstance(subtitles_data, dict):
+                for subtitle_lang, subtitle in subtitles_data.items():
+                    subtitles[subtitle_lang] = [{
+                        'ext': determine_ext(subtitle_url),
+                        'url': subtitle_url,
+                    } for subtitle_url in subtitle.get('urls', [])]
 
             return {
                 'id': video_id,
@@ -201,9 +224,7 @@ class DailymotionIE(DailymotionBaseInfoExtractor):
                 'video info', flags=re.MULTILINE),
             video_id)
 
-        if info.get('error') is not None:
-            msg = 'Couldn\'t get video, Dailymotion says: %s' % info['error']['title']
-            raise ExtractorError(msg, expected=True)
+        self._check_error(info)
 
         formats = []
         for (key, format_id) in self._FORMATS:
@@ -246,13 +267,18 @@ class DailymotionIE(DailymotionBaseInfoExtractor):
             'duration': info['duration']
         }
 
+    def _check_error(self, info):
+        if info.get('error') is not None:
+            raise ExtractorError(
+                '%s said: %s' % (self.IE_NAME, info['error']['title']), expected=True)
+
     def _get_subtitles(self, video_id, webpage):
         try:
             sub_list = self._download_webpage(
                 'https://api.dailymotion.com/video/%s/subtitles?fields=id,language,url' % video_id,
                 video_id, note=False)
         except ExtractorError as err:
-            self._downloader.report_warning('unable to download video subtitles: %s' % compat_str(err))
+            self._downloader.report_warning('unable to download video subtitles: %s' % error_to_compat_str(err))
             return {}
         info = json.loads(sub_list)
         if (info['total'] > 0):

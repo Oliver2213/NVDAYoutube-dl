@@ -10,20 +10,18 @@ import re
 import socket
 import sys
 import time
-import xml.etree.ElementTree
 
 from ..compat import (
     compat_cookiejar,
     compat_cookies,
     compat_getpass,
-    compat_HTTPError,
     compat_http_client,
     compat_urllib_error,
     compat_urllib_parse,
     compat_urllib_parse_urlparse,
-    compat_urllib_request,
     compat_urlparse,
     compat_str,
+    compat_etree_fromstring,
 )
 from ..utils import (
     NO_DEFAULT,
@@ -32,13 +30,16 @@ from ..utils import (
     clean_html,
     compiled_regex_type,
     determine_ext,
+    error_to_compat_str,
     ExtractorError,
     fix_xml_ampersands,
     float_or_none,
     int_or_none,
     RegexNotFoundError,
     sanitize_filename,
+    sanitized_Request,
     unescapeHTML,
+    unified_strdate,
     url_basename,
     xpath_text,
     xpath_with_ns,
@@ -152,6 +153,7 @@ class InfoExtractor(object):
     description:    Full video description.
     uploader:       Full name of the video uploader.
     creator:        The main artist who created the video.
+    release_date:   The date (YYYYMMDD) when the video was released.
     timestamp:      UNIX timestamp of the moment the video became available.
     upload_date:    Video upload date (YYYYMMDD).
                     If not explicitly set, calculated from timestamp.
@@ -163,12 +165,14 @@ class InfoExtractor(object):
                     with the "ext" entry and one of:
                         * "data": The subtitles file contents
                         * "url": A URL pointing to the subtitles file
+                    "ext" will be calculated from URL if missing
     automatic_captions: Like 'subtitles', used by the YoutubeIE for
                     automatically generated captions
-    duration:       Length of the video in seconds, as an integer.
+    duration:       Length of the video in seconds, as an integer or float.
     view_count:     How many users have watched the video on the platform.
     like_count:     Number of positive ratings of the video
     dislike_count:  Number of negative ratings of the video
+    repost_count:   Number of reposts of the video
     average_rating: Average rating give by users, the scale used depends on the webpage
     comment_count:  Number of comments on the video
     comments:       A list of comments, each with one or more of the following
@@ -307,11 +311,11 @@ class InfoExtractor(object):
     @classmethod
     def ie_key(cls):
         """A string for getting the InfoExtractor with get_info_extractor"""
-        return cls.__name__[:-2]
+        return compat_str(cls.__name__[:-2])
 
     @property
     def IE_NAME(self):
-        return type(self).__name__[:-2]
+        return compat_str(type(self).__name__[:-2])
 
     def _request_webpage(self, url_or_request, video_id, note=None, errnote=None, fatal=True):
         """ Returns the response handle """
@@ -329,7 +333,8 @@ class InfoExtractor(object):
                 return False
             if errnote is None:
                 errnote = 'Unable to download webpage'
-            errmsg = '%s: %s' % (errnote, compat_str(err))
+
+            errmsg = '%s: %s' % (errnote, error_to_compat_str(err))
             if fatal:
                 raise ExtractorError(errmsg, sys.exc_info()[2], cause=err)
             else:
@@ -458,7 +463,7 @@ class InfoExtractor(object):
             return xml_string
         if transform_source:
             xml_string = transform_source(xml_string)
-        return xml.etree.ElementTree.fromstring(xml_string.encode('utf-8'))
+        return compat_etree_fromstring(xml_string.encode('utf-8'))
 
     def _download_json(self, url_or_request, video_id,
                        note='Downloading JSON metadata',
@@ -509,6 +514,18 @@ class InfoExtractor(object):
     def report_login(self):
         """Report attempt to log in."""
         self.to_screen('Logging in')
+
+    @staticmethod
+    def raise_login_required(msg='This video is only available for registered users'):
+        raise ExtractorError(
+            '%s. Use --username and --password or --netrc to provide account credentials.' % msg,
+            expected=True)
+
+    @staticmethod
+    def raise_geo_restricted(msg='This video is not available from your location due to geo restriction'):
+        raise ExtractorError(
+            '%s. You might want to use --proxy to workaround.' % msg,
+            expected=True)
 
     # Methods for following #608
     @staticmethod
@@ -607,7 +624,7 @@ class InfoExtractor(object):
                 else:
                     raise netrc.NetrcParseError('No authenticators for %s' % self._NETRC_MACHINE)
             except (IOError, netrc.NetrcParseError) as err:
-                self._downloader.report_warning('parsing .netrc: %s' % compat_str(err))
+                self._downloader.report_warning('parsing .netrc: %s' % error_to_compat_str(err))
 
         return (username, password)
 
@@ -630,8 +647,9 @@ class InfoExtractor(object):
     # Helper functions for extracting OpenGraph info
     @staticmethod
     def _og_regexes(prop):
-        content_re = r'content=(?:"([^>]+?)"|\'([^>]+?)\')'
-        property_re = r'(?:name|property)=[\'"]og:%s[\'"]' % re.escape(prop)
+        content_re = r'content=(?:"([^"]+?)"|\'([^\']+?)\'|\s*([^\s"\'=<>`]+?))'
+        property_re = (r'(?:name|property)=(?:\'og:%(prop)s\'|"og:%(prop)s"|\s*og:%(prop)s\b)'
+                       % {'prop': re.escape(prop)})
         template = r'<meta[^>]+?%s[^>]+?%s'
         return [
             template % (property_re, content_re),
@@ -725,9 +743,10 @@ class InfoExtractor(object):
 
     @staticmethod
     def _hidden_inputs(html):
+        html = re.sub(r'<!--(?:(?!<!--).)*-->', '', html)
         hidden_inputs = {}
-        for input in re.findall(r'<input([^>]+)>', html):
-            if not re.search(r'type=(["\'])hidden\1', input):
+        for input in re.findall(r'(?i)<input([^>]+)>', html):
+            if not re.search(r'type=(["\'])(?:hidden|submit)\1', input):
                 continue
             name = re.search(r'name=(["\'])(?P<value>.+?)\1', input)
             if not name:
@@ -740,7 +759,7 @@ class InfoExtractor(object):
 
     def _form_hidden_inputs(self, form_id, html):
         form = self._search_regex(
-            r'(?s)<form[^>]+?id=(["\'])%s\1[^>]*>(?P<form>.+?)</form>' % form_id,
+            r'(?is)<form[^>]+?id=(["\'])%s\1[^>]*>(?P<form>.+?)</form>' % form_id,
             html, '%s form' % form_id, group='form')
         return self._hidden_inputs(form)
 
@@ -824,7 +843,7 @@ class InfoExtractor(object):
             self._request_webpage(url, video_id, 'Checking %s URL' % item)
             return True
         except ExtractorError as e:
-            if isinstance(e.cause, compat_HTTPError):
+            if isinstance(e.cause, compat_urllib_error.URLError):
                 self.to_screen(
                     '%s: %s URL is invalid, skipping' % (video_id, item))
                 return False
@@ -855,13 +874,18 @@ class InfoExtractor(object):
         time.sleep(timeout)
 
     def _extract_f4m_formats(self, manifest_url, video_id, preference=None, f4m_id=None,
-                             transform_source=lambda s: fix_xml_ampersands(s).strip()):
+                             transform_source=lambda s: fix_xml_ampersands(s).strip(),
+                             fatal=True):
         manifest = self._download_xml(
             manifest_url, video_id, 'Downloading f4m manifest',
             'Unable to download f4m manifest',
             # Some manifests may be malformed, e.g. prosiebensat1 generated manifests
             # (see https://github.com/rg3/youtube-dl/issues/6215#issuecomment-121704244)
-            transform_source=transform_source)
+            transform_source=transform_source,
+            fatal=fatal)
+
+        if manifest is False:
+            return manifest
 
         formats = []
         manifest_version = '1.0'
@@ -869,6 +893,11 @@ class InfoExtractor(object):
         if not media_nodes:
             manifest_version = '2.0'
             media_nodes = manifest.findall('{http://ns.adobe.com/f4m/2.0}media')
+        base_url = xpath_text(
+            manifest, ['{http://ns.adobe.com/f4m/1.0}baseURL', '{http://ns.adobe.com/f4m/2.0}baseURL'],
+            'base URL', default=None)
+        if base_url:
+            base_url = base_url.strip()
         for i, media_el in enumerate(media_nodes):
             if manifest_version == '2.0':
                 media_url = media_el.attrib.get('href') or media_el.attrib.get('url')
@@ -876,13 +905,16 @@ class InfoExtractor(object):
                     continue
                 manifest_url = (
                     media_url if media_url.startswith('http://') or media_url.startswith('https://')
-                    else ('/'.join(manifest_url.split('/')[:-1]) + '/' + media_url))
+                    else ((base_url or '/'.join(manifest_url.split('/')[:-1])) + '/' + media_url))
                 # If media_url is itself a f4m manifest do the recursive extraction
                 # since bitrates in parent manifest (this one) and media_url manifest
                 # may differ leading to inability to resolve the format by requested
                 # bitrate in f4m downloader
                 if determine_ext(manifest_url) == 'f4m':
-                    formats.extend(self._extract_f4m_formats(manifest_url, video_id, preference, f4m_id))
+                    f4m_formats = self._extract_f4m_formats(
+                        manifest_url, video_id, preference, f4m_id, fatal=fatal)
+                    if f4m_formats:
+                        formats.extend(f4m_formats)
                     continue
             tbr = int_or_none(media_el.attrib.get('bitrate'))
             formats.append({
@@ -918,13 +950,15 @@ class InfoExtractor(object):
             if re.match(r'^https?://', u)
             else compat_urlparse.urljoin(m3u8_url, u))
 
-        m3u8_doc = self._download_webpage(
+        res = self._download_webpage_handle(
             m3u8_url, video_id,
             note=note or 'Downloading m3u8 information',
             errnote=errnote or 'Failed to download m3u8 information',
             fatal=fatal)
-        if m3u8_doc is False:
-            return m3u8_doc
+        if res is False:
+            return res
+        m3u8_doc, urlh = res
+        m3u8_url = urlh.geturl()
         last_info = None
         last_media = None
         kv_rex = re.compile(
@@ -1030,6 +1064,7 @@ class InfoExtractor(object):
         video_id = os.path.splitext(url_basename(smil_url))[0]
         title = None
         description = None
+        upload_date = None
         for meta in smil.findall(self._xpath_ns('./head/meta', namespace)):
             name = meta.attrib.get('name')
             content = meta.attrib.get('content')
@@ -1039,11 +1074,22 @@ class InfoExtractor(object):
                 title = content
             elif not description and name in ('description', 'abstract'):
                 description = content
+            elif not upload_date and name == 'date':
+                upload_date = unified_strdate(content)
+
+        thumbnails = [{
+            'id': image.get('type'),
+            'url': image.get('src'),
+            'width': int_or_none(image.get('width')),
+            'height': int_or_none(image.get('height')),
+        } for image in smil.findall(self._xpath_ns('.//image', namespace)) if image.get('src')]
 
         return {
             'id': video_id,
             'title': title or video_id,
             'description': description,
+            'upload_date': upload_date,
+            'thumbnails': thumbnails,
             'formats': formats,
             'subtitles': subtitles,
         }
@@ -1070,7 +1116,7 @@ class InfoExtractor(object):
             if not src:
                 continue
 
-            bitrate = int_or_none(video.get('system-bitrate') or video.get('systemBitrate'), 1000)
+            bitrate = float_or_none(video.get('system-bitrate') or video.get('systemBitrate'), 1000)
             filesize = int_or_none(video.get('size') or video.get('fileSize'))
             width = int_or_none(video.get('width'))
             height = int_or_none(video.get('height'))
@@ -1102,8 +1148,10 @@ class InfoExtractor(object):
             src_url = src if src.startswith('http') else compat_urlparse.urljoin(base, src)
 
             if proto == 'm3u8' or src_ext == 'm3u8':
-                formats.extend(self._extract_m3u8_formats(
-                    src_url, video_id, ext or 'mp4', m3u8_id='hls'))
+                m3u8_formats = self._extract_m3u8_formats(
+                    src_url, video_id, ext or 'mp4', m3u8_id='hls', fatal=False)
+                if m3u8_formats:
+                    formats.extend(m3u8_formats)
                 continue
 
             if src_ext == 'f4m':
@@ -1115,10 +1163,12 @@ class InfoExtractor(object):
                     }
                 f4m_url += '&' if '?' in f4m_url else '?'
                 f4m_url += compat_urllib_parse.urlencode(f4m_params)
-                formats.extend(self._extract_f4m_formats(f4m_url, video_id, f4m_id='hds'))
+                f4m_formats = self._extract_f4m_formats(f4m_url, video_id, f4m_id='hds', fatal=False)
+                if f4m_formats:
+                    formats.extend(f4m_formats)
                 continue
 
-            if src_url.startswith('http'):
+            if src_url.startswith('http') and self._is_valid_url(src, video_id):
                 http_count += 1
                 formats.append({
                     'url': src_url,
@@ -1237,7 +1287,7 @@ class InfoExtractor(object):
 
     def _get_cookies(self, url):
         """ Return a compat_cookies.SimpleCookie with the cookies for the url """
-        req = compat_urllib_request.Request(url)
+        req = sanitized_Request(url)
         self._downloader.cookiejar.add_cookie_header(req)
         return compat_cookies.SimpleCookie(req.get_header('Cookie'))
 

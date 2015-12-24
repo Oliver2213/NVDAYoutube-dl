@@ -11,55 +11,56 @@ from ..utils import (
 
 
 class AppleTrailersIE(InfoExtractor):
+    IE_NAME = 'appletrailers'
     _VALID_URL = r'https?://(?:www\.)?trailers\.apple\.com/(?:trailers|ca)/(?P<company>[^/]+)/(?P<movie>[^/]+)'
     _TESTS = [{
-        "url": "http://trailers.apple.com/trailers/wb/manofsteel/",
+        'url': 'http://trailers.apple.com/trailers/wb/manofsteel/',
         'info_dict': {
             'id': 'manofsteel',
         },
-        "playlist": [
+        'playlist': [
             {
-                "md5": "d97a8e575432dbcb81b7c3acb741f8a8",
-                "info_dict": {
-                    "id": "manofsteel-trailer4",
-                    "ext": "mov",
-                    "duration": 111,
-                    "title": "Trailer 4",
-                    "upload_date": "20130523",
-                    "uploader_id": "wb",
+                'md5': 'd97a8e575432dbcb81b7c3acb741f8a8',
+                'info_dict': {
+                    'id': 'manofsteel-trailer4',
+                    'ext': 'mov',
+                    'duration': 111,
+                    'title': 'Trailer 4',
+                    'upload_date': '20130523',
+                    'uploader_id': 'wb',
                 },
             },
             {
-                "md5": "b8017b7131b721fb4e8d6f49e1df908c",
-                "info_dict": {
-                    "id": "manofsteel-trailer3",
-                    "ext": "mov",
-                    "duration": 182,
-                    "title": "Trailer 3",
-                    "upload_date": "20130417",
-                    "uploader_id": "wb",
+                'md5': 'b8017b7131b721fb4e8d6f49e1df908c',
+                'info_dict': {
+                    'id': 'manofsteel-trailer3',
+                    'ext': 'mov',
+                    'duration': 182,
+                    'title': 'Trailer 3',
+                    'upload_date': '20130417',
+                    'uploader_id': 'wb',
                 },
             },
             {
-                "md5": "d0f1e1150989b9924679b441f3404d48",
-                "info_dict": {
-                    "id": "manofsteel-trailer",
-                    "ext": "mov",
-                    "duration": 148,
-                    "title": "Trailer",
-                    "upload_date": "20121212",
-                    "uploader_id": "wb",
+                'md5': 'd0f1e1150989b9924679b441f3404d48',
+                'info_dict': {
+                    'id': 'manofsteel-trailer',
+                    'ext': 'mov',
+                    'duration': 148,
+                    'title': 'Trailer',
+                    'upload_date': '20121212',
+                    'uploader_id': 'wb',
                 },
             },
             {
-                "md5": "5fe08795b943eb2e757fa95cb6def1cb",
-                "info_dict": {
-                    "id": "manofsteel-teaser",
-                    "ext": "mov",
-                    "duration": 93,
-                    "title": "Teaser",
-                    "upload_date": "20120721",
-                    "uploader_id": "wb",
+                'md5': '5fe08795b943eb2e757fa95cb6def1cb',
+                'info_dict': {
+                    'id': 'manofsteel-teaser',
+                    'ext': 'mov',
+                    'duration': 93,
+                    'title': 'Teaser',
+                    'upload_date': '20120721',
+                    'uploader_id': 'wb',
                 },
             },
         ]
@@ -144,3 +145,76 @@ class AppleTrailersIE(InfoExtractor):
             'id': movie,
             'entries': playlist,
         }
+
+
+class AppleTrailersSectionIE(InfoExtractor):
+    IE_NAME = 'appletrailers:section'
+    _SECTIONS = {
+        'justadded': {
+            'feed_path': 'just_added',
+            'title': 'Just Added',
+        },
+        'exclusive': {
+            'feed_path': 'exclusive',
+            'title': 'Exclusive',
+        },
+        'justhd': {
+            'feed_path': 'just_hd',
+            'title': 'Just HD',
+        },
+        'mostpopular': {
+            'feed_path': 'most_pop',
+            'title': 'Most Popular',
+        },
+        'moviestudios': {
+            'feed_path': 'studios',
+            'title': 'Movie Studios',
+        },
+    }
+    _VALID_URL = r'https?://(?:www\.)?trailers\.apple\.com/#section=(?P<id>%s)' % '|'.join(_SECTIONS)
+    _TESTS = [{
+        'url': 'http://trailers.apple.com/#section=justadded',
+        'info_dict': {
+            'title': 'Just Added',
+            'id': 'justadded',
+        },
+        'playlist_mincount': 80,
+    }, {
+        'url': 'http://trailers.apple.com/#section=exclusive',
+        'info_dict': {
+            'title': 'Exclusive',
+            'id': 'exclusive',
+        },
+        'playlist_mincount': 80,
+    }, {
+        'url': 'http://trailers.apple.com/#section=justhd',
+        'info_dict': {
+            'title': 'Just HD',
+            'id': 'justhd',
+        },
+        'playlist_mincount': 80,
+    }, {
+        'url': 'http://trailers.apple.com/#section=mostpopular',
+        'info_dict': {
+            'title': 'Most Popular',
+            'id': 'mostpopular',
+        },
+        'playlist_mincount': 80,
+    }, {
+        'url': 'http://trailers.apple.com/#section=moviestudios',
+        'info_dict': {
+            'title': 'Movie Studios',
+            'id': 'moviestudios',
+        },
+        'playlist_mincount': 80,
+    }]
+
+    def _real_extract(self, url):
+        section = self._match_id(url)
+        section_data = self._download_json(
+            'http://trailers.apple.com/trailers/home/feeds/%s.json' % self._SECTIONS[section]['feed_path'],
+            section)
+        entries = [
+            self.url_result('http://trailers.apple.com' + e['location'])
+            for e in section_data]
+        return self.playlist_result(entries, section, self._SECTIONS[section]['title'])
